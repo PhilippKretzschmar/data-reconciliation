@@ -1,0 +1,7 @@
+numpy
+pandas
+openpyxl
+matplotlib
+scipy
+pytest
+pytest-cov

@@ -1,0 +1,24 @@
+name: data-reconciliation
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - openpyxl
+  - matplotlib
+  - scipy
+  - pytest
+  - pytest-cov
+  - pip
+  - pip:
+      - -e .          # installiert das lokale Package im dev-Modus
+
+# Optionale GPU-Beschleunigung (CUDA 12):
+# Kommentar entfernen und environment neu erstellen:
+#   conda env update -f environment.yml
+#  - pip:
+#      - cupy-cuda12x

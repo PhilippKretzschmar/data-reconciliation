@@ -205,3 +205,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Daten und Outputs
+data/
+files/
+*.xlsx
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Conda
+*.egg-info/
+
+# Notebooks (optional: nur Checkpoints ignorieren, Notebooks selbst committen)
+notebooks/.ipynb_checkpoints/
+
+# Setup-Script Output (optional)
+setup_project.py

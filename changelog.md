@@ -12,6 +12,7 @@ Alle relevanten Änderungen am Projekt werden hier dokumentiert. Format angelehn
   * Dateiname automatisch aus Figure-/Subplot-Titel + ISO-Datum: `YYYY-MM-DD_<titel>.png`
   * Optionales Löschen vorhandener Bilddateien vor dem Speichern (`clear_existing=True`)
   * Speicherparameter: `dpi=150`, `bbox_inches="tight"` (geeignet für Word- und PDF-Einbindung)
+* Jupyter Shell Script Start/stop
 
 ### Geändert
 * `visualization/plots.py`:
@@ -24,7 +25,6 @@ Alle relevanten Änderungen am Projekt werden hier dokumentiert. Format angelehn
 ### Behoben
 * `visualization/save.py`: Parameter `optimize=True` aus `_SAVE_KWARGS` entfernt –
   wird von `FigureCanvasAgg.print_png()` nicht unterstützt und verursachte `TypeError`
-
 
 
 

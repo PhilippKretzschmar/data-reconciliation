@@ -13,6 +13,11 @@ Erwartetes Format:
         Zeile 1:   Strom-Nummern (ab Spalte 2)
         Spalte 1:  Bezeichnungen der Bilanzräume (ab Zeile 2)
         Zeile 2+:  Einträge der Matrix A (+1, 0, -1)
+
+    Worksheet 3 (Strombezeichnungen, optional):
+        Zeile 1:   Header (Strom-Nr., Klarname, Nominaler Wert, Einheit, Typ)
+        Zeile 2+:  Eine Zeile je Strom
+        Rückgabe als dict {stream_id (int): {klarname, nominal, einheit, typ}}
 """
 
 import numpy as np
@@ -29,18 +34,21 @@ def _parse_stream_id(val) -> int:
 
 def read_excel(path: str) -> dict:
     """
-    Liest Stromdaten und Matrix A aus dem Excel-File.
+    Liest Stromdaten, Matrix A und (optional) Strombezeichnungen
+    aus dem Excel-File.
 
     Args:
         path: Pfad zur Excel-Datei
 
     Returns:
         {
-          'stream_ids':   list[int]      - Strom-Nummern [4, 5, 16, ...]
-          'rho':          np.ndarray     - (N,) relative Unsicherheiten
-          'X':            np.ndarray     - (k, N) Messdaten in kg/h
-          'A':            np.ndarray     - (M, N) Bilanzmatrix
-          'balance_ids':  list[str]      - Bezeichnungen der Bilanzräume
+          'stream_ids':        list[int]        – Strom-Nummern [4, 5, ...]
+          'rho':               np.ndarray       – (N,) relative Unsicherheiten
+          'X':                 np.ndarray       – (k, N) Messdaten in kg/h
+          'A':                 np.ndarray       – (M, N) Bilanzmatrix
+          'balance_ids':       list[str]        – Bezeichnungen der Bilanzräume
+          'stream_labels':     dict | None      – {int: dict} Klarname etc.,
+                                                  None wenn Sheet nicht vorhanden
         }
     """
     # Worksheet 1: Stromdaten
@@ -54,16 +62,26 @@ def read_excel(path: str) -> dict:
     balance_ids = df2.iloc[1:, 0].tolist()
     A           = df2.iloc[1:, 1:].astype(float).values      # (M, N)
 
+    # Worksheet 3: Strombezeichnungen (optional)
+    xl          = pd.ExcelFile(path)
+    stream_labels = None
+    if len(xl.sheet_names) >= 3:
+        df3 = pd.read_excel(path, sheet_name=2, header=0)
+        stream_labels = {}
+        for _, row in df3.iterrows():
+            sid = _parse_stream_id(row.iloc[0])
+            stream_labels[sid] = {
+                "klarname": str(row.iloc[1]),
+                "nominal":  float(row.iloc[2]),
+                "einheit":  str(row.iloc[3]),
+                "typ":      str(row.iloc[4]),
+            }
+
     return {
-        "stream_ids":  stream_ids,
-        "rho":         rho,
-        "X":           X,
-        "A":           A,
-        "balance_ids": balance_ids,
+        "stream_ids":    stream_ids,
+        "rho":           rho,
+        "X":             X,
+        "A":             A,
+        "balance_ids":   balance_ids,
+        "stream_labels": stream_labels,
     }
-
-
-
-
-
-

@@ -1,8 +1,3 @@
-# cd C:\Users\Admin\Nextcloud-RP\997_Python-Projekte\data-reconciliation
-# .\start_jupyter.ps1
-# .\stop_jupyter.ps1
-
-
 # data-reconciliation
 
 Modulares Python-Tool für lineare stationäre Datenrekonziliation

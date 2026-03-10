@@ -51,17 +51,23 @@ def run(input_path: str,
     # (a) Einlesen
     print("\n[1/5] Daten einlesen...")
     data = read_excel(input_path)
-    X, A, rho       = data["X"], data["A"], data["rho"]
-    stream_ids      = data["stream_ids"]
-    balance_ids     = data["balance_ids"]
-    stream_labels   = data["stream_labels"]
+    X, A, rho     = data["X"], data["A"], data["rho"]
+    stream_ids    = data["stream_ids"]
+    balance_names = data["balance_names"]
+    stream_meta   = data["stream_meta"]
     print(f"      X: {X.shape}  A: {A.shape}  rho: {rho}")
+
+    # Klarnamen für Plots ableiten (Fallback auf "S{id}" wenn kein Metadaten-Sheet)
+    stream_names = (
+        [stream_meta[sid]["klarname"] for sid in stream_ids]
+        if stream_meta is not None else None
+    )
 
     # (b) Massenbilanz der Rohdaten
     print("\n[2/5] Massenbilanz (Rohdaten)...")
-    balance_raw = compute_mass_balance(X, A, balance_ids=balance_ids)
-    for m, bid in enumerate(balance_ids):
-        print(f"      {bid}: mittlerer Bilanzfehler = "
+    balance_raw = compute_mass_balance(X, A, balance_ids=balance_names)
+    for m, bname in enumerate(balance_names):
+        print(f"      {bname}: mittlerer Bilanzfehler = "
               f"{balance_raw['residuals_mean'][m]:+.2f} kg/h")
 
     # (c) Filterung
@@ -82,9 +88,9 @@ def run(input_path: str,
 
     # (d) Massenbilanz der gefilterten Daten
     print("\n[4/5] Massenbilanz (gefilterte Daten)...")
-    balance_stat = compute_mass_balance(X_stat, A, balance_ids=balance_ids)
-    for m, bid in enumerate(balance_ids):
-        print(f"      {bid}: mittlerer Bilanzfehler = "
+    balance_stat = compute_mass_balance(X_stat, A, balance_ids=balance_names)
+    for m, bname in enumerate(balance_names):
+        print(f"      {bname}: mittlerer Bilanzfehler = "
               f"{balance_stat['residuals_mean'][m]:+.2f} kg/h")
 
     # (e) Rekonziliation
@@ -95,11 +101,11 @@ def run(input_path: str,
 
     # (f) Visualisierung
     print("\n      Visualisierung speichern...")
-    fig1 = plot_raw_data(X, stream_ids, mask=mask, stream_labels=stream_labels)
+    fig1 = plot_raw_data(X, ids=stream_ids, labels=stream_names, mask=mask)
     fig1.savefig(f"{output_dir}/rohdaten.png", dpi=150)
 
-    fig2 = plot_corrections(X_stat, result["X_rec"], stream_ids,
-                            stream_labels=stream_labels)
+    fig2 = plot_corrections(X_stat, result["X_rec"],
+                            ids=stream_ids, labels=stream_names)
     fig2.savefig(f"{output_dir}/korrekturen.png", dpi=150)
 
     print(f"      Plots gespeichert in: {output_dir}/")

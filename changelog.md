@@ -4,6 +4,47 @@ Changelog
 Alle relevanten Änderungen am Projekt werden hier dokumentiert. Format angelehnt an Keep a Changelog.
 
 
+## [2026-03-10] – Benennung: read_excel-Dict und main.py-Bugfix
+
+### Geändert
+
+* `io/reader.py`: Zwei irreführende Schlüssel im Rückgabe-Dict von `read_excel()` umbenannt:
+  * `"stream_labels"` → **`"stream_meta"`**
+    Begründung: Das Dict enthält nicht nur Labels, sondern vollständige Metadaten
+    je Strom (`klarname`, `nominal`, `einheit`, `typ`). Der alte Name war zu eng.
+  * `"balance_ids"` → **`"balance_names"`**
+    Begründung: Die Einträge sind sprechende Klartextnamen (z.B. `"Gesamtbilanz"`),
+    keine technischen IDs. `balance_names` ist konsistenter mit dem tatsächlichen Inhalt.
+  * Docstring entsprechend aktualisiert.
+
+* `main.py`:
+  * Zugriffe auf `data["stream_labels"]` und `data["balance_ids"]` auf neue
+    Schlüsselnamen `data["stream_meta"]` und `data["balance_names"]` umgestellt.
+  * Lokale Variablen `stream_labels` → `stream_meta`, `balance_ids` → `balance_names`
+    durchgängig umbenannt.
+  * **Bugfix**: `plot_raw_data()` und `plot_corrections()` wurden bisher mit dem
+    veralteten Keyword-Argument `stream_labels=` aufgerufen, das nach der
+    Generalisierung von `plot_timeseries` (10.03.) nicht mehr existiert.
+    Klarnamen wurden daher nie in die Plots übergeben.
+    Korrektur: Klarnamen werden jetzt explizit als `stream_names`-Liste
+    (`[stream_meta[sid]["klarname"] for sid in stream_ids]`) extrahiert und als
+    `labels=stream_names` übergeben. Fallback auf `None` (→ `"S{id}"`) wenn kein
+    Metadaten-Sheet vorhanden ist.
+
+### Behoben
+
+* `main.py`: Klarnamen aus Sheet 3 wurden in Plots nicht angezeigt (stiller Fehler
+  durch veraltetes Keyword-Argument `stream_labels=` an `plot_raw_data`/
+  `plot_corrections`).
+
+### Tests
+
+* `tests/test_reader.py`:
+  * Assertions auf neue Schlüsselnamen `"balance_names"` und `"stream_meta"` umgestellt.
+  * Neuen Test `test_read_excel_stream_meta()` ergänzt: prüft vollständiges
+    Einlesen aller Felder aus Sheet 3 (`klarname`, `nominal`, `einheit`, `typ`).
+
+
 
 
 

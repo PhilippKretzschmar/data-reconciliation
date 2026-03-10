@@ -34,7 +34,7 @@ def _parse_stream_id(val) -> int:
 
 def read_excel(path: str) -> dict:
     """
-    Liest Stromdaten, Matrix A und (optional) Strombezeichnungen
+    Liest Stromdaten, Matrix A und (optional) Strom-Metadaten
     aus dem Excel-File.
 
     Args:
@@ -42,13 +42,14 @@ def read_excel(path: str) -> dict:
 
     Returns:
         {
-          'stream_ids':        list[int]        – Strom-Nummern [4, 5, ...]
-          'rho':               np.ndarray       – (N,) relative Unsicherheiten
-          'X':                 np.ndarray       – (k, N) Messdaten in kg/h
-          'A':                 np.ndarray       – (M, N) Bilanzmatrix
-          'balance_ids':       list[str]        – Bezeichnungen der Bilanzräume
-          'stream_labels':     dict | None      – {int: dict} Klarname etc.,
-                                                  None wenn Sheet nicht vorhanden
+          'stream_ids':    list[int]        – Strom-Nummern [4, 5, ...]
+          'rho':           np.ndarray       – (N,) relative Unsicherheiten sigma/x
+          'X':             np.ndarray       – (k, N) Messdaten in kg/h
+          'A':             np.ndarray       – (M, N) Bilanzmatrix
+          'balance_names': list[str]        – Sprechende Bezeichnungen der Bilanzräume
+          'stream_meta':   dict | None      – {int: dict} Metadaten je Strom:
+                                              klarname, nominal, einheit, typ.
+                                              None wenn Sheet nicht vorhanden.
         }
     """
     # Worksheet 1: Stromdaten
@@ -58,19 +59,19 @@ def read_excel(path: str) -> dict:
     X          = df1.iloc[2:,  1:].astype(float).values      # (k, N)
 
     # Worksheet 2: Matrix A
-    df2         = pd.read_excel(path, sheet_name=1, header=None)
-    balance_ids = df2.iloc[1:, 0].tolist()
-    A           = df2.iloc[1:, 1:].astype(float).values      # (M, N)
+    df2          = pd.read_excel(path, sheet_name=1, header=None)
+    balance_names = df2.iloc[1:, 0].tolist()
+    A            = df2.iloc[1:, 1:].astype(float).values     # (M, N)
 
-    # Worksheet 3: Strombezeichnungen (optional)
-    xl          = pd.ExcelFile(path)
-    stream_labels = None
+    # Worksheet 3: Strom-Metadaten (optional)
+    xl         = pd.ExcelFile(path)
+    stream_meta = None
     if len(xl.sheet_names) >= 3:
         df3 = pd.read_excel(path, sheet_name=2, header=0)
-        stream_labels = {}
+        stream_meta = {}
         for _, row in df3.iterrows():
             sid = _parse_stream_id(row.iloc[0])
-            stream_labels[sid] = {
+            stream_meta[sid] = {
                 "klarname": str(row.iloc[1]),
                 "nominal":  float(row.iloc[2]),
                 "einheit":  str(row.iloc[3]),
@@ -82,6 +83,6 @@ def read_excel(path: str) -> dict:
         "rho":           rho,
         "X":             X,
         "A":             A,
-        "balance_ids":   balance_ids,
-        "stream_labels": stream_labels,
+        "balance_names": balance_names,
+        "stream_meta":   stream_meta,
     }

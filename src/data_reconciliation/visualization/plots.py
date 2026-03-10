@@ -7,6 +7,7 @@ Einsetzbar für beliebige Zeitreihendaten, z.B. Massenströme, Residuale, etc.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 
 # Schriftgrößen – zentral anpassbar
 _FS       = 12   # Achsenbeschriftungen, Tick-Labels
@@ -25,14 +26,16 @@ def _make_labels(n: int,
     """
     Erzeugt eine Liste von n Beschriftungen nach folgender Priorität:
 
-        1. labels direkt (beliebige Strings, z.B. Klarnamen)
-        2. ids mit "S"-Präfix  (nur wenn labels=None, ids gesetzt)
+        1. labels direkt (beliebige Strings, z.B. Klarnamen) – kein S-Präfix
+        2. ids mit "S"-Präfix  (nur wenn labels=None)
         3. Fallback: "0", "1", ... (wenn beides None)
 
     Args:
         n:       Anzahl benötigter Labels (= X.shape[1])
-        labels:  Direkte Beschriftungsliste, z.B. ["Gesamtbilanz", "Reaktor"]
-        ids:     Numerische IDs, werden zu "S4", "S16" etc. expandiert
+        labels:  Direkte Beschriftungsliste, z.B. ["Gesamtbilanz", "Reaktor"].
+                 Hat Vorrang vor ids.
+        ids:     Numerische IDs, werden zu "S4", "S16" etc. expandiert.
+                 Nur verwendet wenn labels=None.
     """
     if labels is not None:
         return list(labels)[:n]
@@ -44,7 +47,8 @@ def _make_labels(n: int,
 def _safe_normalize(X: np.ndarray) -> np.ndarray:
     """
     Normiert spaltenweise auf den Mittelwert (x / x̄).
-    Spalten mit |x̄| < 1e-10 werden nicht normiert (Schutz vor Division durch Null).
+    Spalten mit |x̄| < 1e-10 werden nicht normiert (Schutz vor Division durch Null,
+    z.B. bei Residualen mit Mittelwert nahe 0).
     """
     mean = X.mean(axis=0)
     safe_mean = np.where(np.abs(mean) < 1e-10, 1.0, mean)
@@ -66,41 +70,61 @@ def plot_timeseries(X: np.ndarray,
                     ylabel_left: str = "Wert",
                     ylabel_right: str | None = None,
                     normalize: bool = False,
-                    hline: float | None = None) -> plt.Figure:
+                    hline: float | None = None,
+                    sci_left: bool = False,
+                    sci_right: bool = False) -> plt.Figure:
     """
     1×2 Multiplot: Zeitverlauf (links) und Boxplot (rechts).
 
-    Generisch einsetzbar für beliebige Zeitreihen. Labels für Legende
-    und Boxplot-Kategorien werden einheitlich aus `labels` oder `ids`
-    abgeleitet – "S"-Präfix wird nur bei reiner ID-Übergabe gesetzt.
+    Generisch einsetzbar für beliebige Zeitreihen (Massenströme, Residuale,
+    etc.). Labels für Legende und Boxplot-Kategorien werden einheitlich aus
+    `labels` oder `ids` abgeleitet.
 
     Args:
         X:            (k, N) Zeitreihendaten
         labels:       Direkte Beschriftungsliste, z.B. ["Gesamtbilanz", "Reaktor"].
-                      Hat Vorrang vor ids. (optional)
+                      Hat Vorrang vor ids, kein "S"-Präfix. (optional)
         ids:          Numerische Strom-IDs → werden zu "S4", "S16" expandiert.
                       Nur verwendet wenn labels=None. (optional)
         mask:         (k,) bool-Array – markiert z.B. gefilterte Zeitschritte
-                      als rote Punkte im Zeitverlauf (optional)
-        figsize:      Figurengröße in Zoll, Default (14, 5)
-        title_left:   Titel linker Subplot, Default "Zeitverlauf"
-        title_right:  Titel rechter Subplot, Default "Boxplot"
-        xlabel:       x-Achsenbeschriftung Zeitverlauf, Default "Zeitschritt t [h]"
-        ylabel_left:  y-Achsenbeschriftung Zeitverlauf, Default "Wert"
+                      als rote Punkte im Zeitverlauf. (optional)
+        figsize:      Figurengröße in Zoll. Default: (14, 5)
+        title_left:   Titel linker Subplot. Default: "Zeitverlauf"
+        title_right:  Titel rechter Subplot. Default: "Boxplot"
+        xlabel:       x-Achsenbeschriftung Zeitverlauf. Default: "Zeitschritt t [h]"
+        ylabel_left:  y-Achsenbeschriftung Zeitverlauf. Default: "Wert"
         ylabel_right: y-Achsenbeschriftung Boxplot.
                       Default: "Normierter Wert (x / x̄)" wenn normalize=True,
-                               "Wert" wenn normalize=False
+                               "Wert" wenn normalize=False.
         normalize:    True  → Boxplot normiert auf Spaltenmittelwert (x / x̄),
-                               Referenzlinie bei 1.0
-                      False → Boxplot mit Rohdaten (Default, sinnvoll für Residuale)
-        hline:        Horizontale Referenzlinie im Boxplot (optional).
+                               Referenzlinie bei 1.0. Nicht sinnvoll für
+                               vorzeichenbehaftete Daten (z.B. Residuale).
+                      False → Boxplot mit Rohdaten. Default.
+        hline:        Horizontale Referenzlinie im Boxplot. (optional)
                       Default: 1.0 wenn normalize=True, 0.0 wenn normalize=False.
-                      None → keine Linie.
+                      Auf None setzen um Linie zu unterdrücken.
+        sci_left:     True → wissenschaftliche Notation (z.B. 1×10⁶) auf der
+                      y-Achse des Zeitverlaufs. Sinnvoll bei sehr großen oder
+                      sehr kleinen Werten. Default: False.
+        sci_right:    True → wissenschaftliche Notation auf der y-Achse des
+                      Boxplots. Default: False.
 
     Returns:
         matplotlib Figure
+
+    Beispiele:
+        # Massenströme mit Klarnamen
+        stream_names = [stream_meta[sid]["klarname"] for sid in stream_ids]
+        fig = plot_timeseries(X, labels=stream_names, normalize=True,
+                              ylabel_left=r"Massenstrom / kg$\\cdot$h$^{-1}$")
+
+        # Bilanzresiduale
+        fig = plot_timeseries(residuals, labels=balance_labels,
+                              title_left="Bilanzresiduale – Zeitverlauf",
+                              ylabel_left=r"Residual / kg$\\cdot$h$^{-1}$",
+                              sci_left=True)
     """
-    n      = X.shape[1]
+    n       = X.shape[1]
     _labels = _make_labels(n, labels, ids)
     t       = np.arange(X.shape[0])
 
@@ -112,7 +136,7 @@ def plot_timeseries(X: np.ndarray,
 
     if mask is not None:
         removed = ~mask
-        # Dummy-Eintrag für Legende
+        # Dummy-Scatter nur für Legendeneintrag
         ax1.scatter([], [], color="red", s=10, label="entfernt (Filter)")
         for i in range(n):
             ax1.scatter(t[removed], X[removed, i],
@@ -125,9 +149,14 @@ def plot_timeseries(X: np.ndarray,
     ax1.legend(fontsize=_FS_LEG)
     ax1.grid(True, alpha=0.3)
 
-    # --- Rechts: Boxplot ---
-    X_box = _safe_normalize(X) if normalize else X
+    if sci_left:
+	    fmt = ScalarFormatter(useMathText=True)
+	    fmt.set_scientific(True)
+	    fmt.set_powerlimits((0, 0))
+	    ax1.yaxis.set_major_formatter(fmt)
 
+    # --- Rechts: Boxplot ---
+    X_box         = _safe_normalize(X) if normalize else X
     _ylabel_right = ylabel_right or ("Normierter Wert (x / x̄)" if normalize else "Wert")
 
     # Referenzlinie: explizit übergeben > automatisch aus normalize
@@ -148,6 +177,12 @@ def plot_timeseries(X: np.ndarray,
     ax2.set_title(title_right, fontsize=_FS_TITLE)
     ax2.tick_params(axis="y", labelsize=_FS)
     ax2.grid(True, alpha=0.3)
+
+    if sci_right:
+	    fmt = ScalarFormatter(useMathText=True)
+	    fmt.set_scientific(True)
+	    fmt.set_powerlimits((0, 0))
+	    ax2.yaxis.set_major_formatter(fmt)
 
     plt.tight_layout()
     return fig
@@ -170,11 +205,13 @@ def plot_corrections(X: np.ndarray,
     Histogramm der Rekonziliations-Korrekturen je Strom/Variable.
 
     Args:
-        X:       (k, N) Rohdaten
+        X:       (k, N) Rohdaten (vor Rekonziliation)
         X_rec:   (k, N) rekonziliierte Werte
-        labels:  Direkte Beschriftungsliste (optional, Vorrang vor ids)
+        labels:  Direkte Beschriftungsliste, z.B. Klarnamen. (optional)
+                 Hat Vorrang vor ids, kein "S"-Präfix.
         ids:     Numerische Strom-IDs → "S4", "S16" etc. (optional)
-        figsize: Figurengröße in Zoll, Default (14, 5)
+                 Nur verwendet wenn labels=None.
+        figsize: Figurengröße in Zoll. Default: (14, 5)
 
     Returns:
         matplotlib Figure

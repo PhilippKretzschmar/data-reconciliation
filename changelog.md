@@ -3,6 +3,31 @@ Changelog
 
 Alle relevanten Änderungen am Projekt werden hier dokumentiert. Format angelehnt an Keep a Changelog.
 
+
+
+
+
+## [2026-03-10] – Visualisierung: sci-Notation und Dokumentation
+### Geändert
+* `visualization/plots.py`: `plot_timeseries` um wissenschaftliche Notation erweitert
+  * Neue Parameter `sci_left=False` / `sci_right=False`: aktivieren wissenschaftliche
+    Achsenbeschriftung (z.B. 1×10⁶ statt 1000000) unabhängig für linken und rechten
+    Subplot – sinnvoll bei sehr großen oder sehr kleinen Werten, funktioniert
+    vorzeichenunabhängig (im Gegensatz zu Log-Skala)
+  * `scilimits=(-3, 4)`: Notation wird nur bei Größenordnungen < 10⁻³ oder > 10⁴
+    aktiviert, sonst Dezimaldarstellung
+  * Docstring um Parameterbeschreibung und Verwendungsbeispiele ergänzt
+  * Log-Skala bewusst nicht implementiert: bei vorzeichenbehafteten Daten
+    (Residuale) konzeptionell ungeeignet
+### Behoben
+* `visualization/plots.py`: `sci_right` funktionierte nicht zuverlässig –
+  `ticklabel_format()` durch expliziten `ScalarFormatter` ersetzt
+  (`set_powerlimits((0, 0))` erzwingt sci-Notation unabhängig von der Größenordnung).
+  Gilt analog für `sci_left`.
+
+
+
+
 ## [2026-03-10] – Visualisierung: Generalisierung plot_timeseries
 
 ### Geändert

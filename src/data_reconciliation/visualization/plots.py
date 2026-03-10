@@ -40,7 +40,9 @@ def plot_raw_data(X: np.ndarray,
                   stream_ids: list,
                   mask: np.ndarray | None = None,
                   figsize: tuple = (14, 5),
-                  stream_labels: dict | None = None) -> plt.Figure:
+                  stream_labels: dict | None = None,
+		  title_left: str | None = "Rohdaten – Zeitverlauf",
+		  title_right: str | None = "Rohdaten – Boxplot (normiert)") -> plt.Figure:
     """
     1×2 Multiplot der Rohdaten:
         Links:  Zeitverlauf aller Ströme (optional: entfernte Punkte markiert)
@@ -52,6 +54,8 @@ def plot_raw_data(X: np.ndarray,
         mask:           (k,) bool – stationäre Zeitschritte (optional)
         figsize:        Figurengröße
         stream_labels:  dict {int: {"klarname": str, ...}} (optional)
+	title_left: 	string | None = "Rohdaten – Zeitverlauf" (optional)
+	title_right: 	string | None = "Rohdaten – Boxplot (normiert)" (optional)
     """
     labels = _make_labels(stream_ids, stream_labels)
     t      = np.arange(X.shape[0])
@@ -71,7 +75,7 @@ def plot_raw_data(X: np.ndarray,
 
     ax1.set_xlabel("Zeitschritt t [h]", fontsize=_FS)
     ax1.set_ylabel("Massenstrom [kg/h]", fontsize=_FS)
-    ax1.set_title("Rohdaten – Zeitverlauf", fontsize=_FS_TITLE)
+    ax1.set_title(title_left, fontsize=_FS_TITLE)
     ax1.tick_params(labelsize=_FS)
     ax1.legend(fontsize=_FS_LEG)
     ax1.grid(True, alpha=0.3)
@@ -87,7 +91,7 @@ def plot_raw_data(X: np.ndarray,
     ax2.set_xticklabels(labels, rotation=30, ha="right", fontsize=_FS)
     ax2.axhline(1.0, color="red", linestyle="--", alpha=0.5, linewidth=1)
     ax2.set_ylabel("Normierter Massenstrom (x / x̄)", fontsize=_FS)
-    ax2.set_title("Rohdaten – Boxplot (normiert)", fontsize=_FS_TITLE)
+    ax2.set_title(title_right, fontsize=_FS_TITLE)
     ax2.tick_params(axis="y", labelsize=_FS)
     ax2.grid(True, alpha=0.3)
 

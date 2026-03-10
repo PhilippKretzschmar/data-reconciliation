@@ -14,7 +14,7 @@ Verwendung im Notebook:
 import glob
 import os
 import re
-from datetime import date
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 
@@ -106,7 +106,7 @@ def _clear_images(directory: str) -> int:
 def save_figure(
     fig: plt.Figure,
     subfolder: str = "plots",
-    clear_existing: bool = True,
+    clear_existing: bool = False,
     verbose: bool = True,
 ) -> str:
     """
@@ -133,7 +133,7 @@ def save_figure(
             print(f"  {n} vorhandene Bilddatei(en) gelöscht: {target_dir}")
 
     title    = _extract_title(fig)
-    stem     = f"{date.today().isoformat()}_{_sanitize(title)}"
+    stem = f"{datetime.now().strftime('%Y-%m-%d_%H-%M')}_{_sanitize(title)}"
     filepath = os.path.join(target_dir, f"{stem}.png")
 
     fig.savefig(filepath, **_SAVE_KWARGS)

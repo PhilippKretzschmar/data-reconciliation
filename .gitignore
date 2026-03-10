@@ -226,6 +226,6 @@ notebooks/.ipynb_checkpoints/
 setup_project.py
 
 # PowerShell Workspace-Scripts (lokal, nicht fuer andere Nutzer)
-toggle_workspace.ps1
+start_workspace.ps1
 start_jupyter.ps1
 stop_jupyter.ps1

@@ -4,6 +4,35 @@ Changelog
 Alle relevanten Änderungen am Projekt werden hier dokumentiert. Format angelehnt an Keep a Changelog.
 
 
+## [2026-03-10] – Massenbilanz-Diagnose
+
+### Hinzugefügt
+* `reconciliation/balance.py`: Neue Funktion `compute_mass_balance(X, A, balance_ids=None)`
+  * Berechnet den rohen Massenbilanz-Fehler **vor** der Rekonziliation: `R = X · A^T`
+  * Rückgabe: `residuals (k, M)` – Bilanzfehler je Zeitschritt und Bilanzraum [kg/h]
+  * Rückgabe: `residuals_mean (M,)` – Mittlerer Bilanzfehler je Bilanzraum über alle k Zeitschritte
+  * Rückgabe: `balance_ids` – Bezeichnungen der Bilanzräume, unverändert durchgereicht (konsistent mit `reader.py`)
+  * Funktion ist generalisierbar: ein Call je Input, kein interner Zustand
+  * CUDA-kompatibel via `numpy`/`cupy`-Austausch (analog zu `reconcile.py`)
+* `tests/test_balance.py`: Unit-Tests für `compute_mass_balance()`
+  * Prüft Rückgabestruktur, Shapes, Rechenformel, systematischen Fehler,
+    mehrere Bilanzräume sowie Unabhängigkeit zweier Calls mit verschiedenen Inputs
+* Visualisierung: optionale Parameter title_left, title_right
+
+### Geändert
+* `main.py`:
+  * Import von `compute_mass_balance` ergänzt
+  * Zwei neue Pipeline-Schritte eingeführt:
+    * **[2/5]** `balance_raw  = compute_mass_balance(X,      A, balance_ids)` – Rohdaten
+    * **[4/5]** `balance_stat = compute_mass_balance(X_stat, A, balance_ids)` – gefilterte Daten
+  * Mittlerer Bilanzfehler je Bilanzraum wird für beide Inputs auf der Konsole ausgegeben
+  * Return-Dict um `balance_raw` und `balance_stat` erweitert
+  * `stream_labels` wird nun konsistent an `plot_raw_data()` und `plot_corrections()` übergeben
+  * Schritte neu nummeriert: [1–5] statt [1–4]
+* grafik-Export: timestamp im Dateinamen, vorhandene Dateien werden per Default nicht gelöscht
+
+
+
 ## [2026-03-09] – Visualisierung: Speicherfunktion und Plot-Verbesserungen
 
 ### Hinzugefügt

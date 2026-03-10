@@ -3,6 +3,24 @@ Changelog
 
 Alle relevanten Änderungen am Projekt werden hier dokumentiert. Format angelehnt an Keep a Changelog.
 
+## [2026-03-10] – Visualisierung: Generalisierung plot_timeseries
+
+### Geändert
+* `visualization/plots.py`: `plot_raw_data` zu `plot_timeseries` umbenannt und vollständig generalisiert
+  * Rückwärtskompatibilität erhalten: `plot_raw_data = plot_timeseries` als Alias
+  * **Labels**: einheitliches Konzept über neue Hilfsfunktion `_make_labels(n, labels, ids)`:
+    * `labels` (direkte Stringliste) hat Vorrang – kein "S"-Präfix
+    * `ids` (numerische IDs) → "S4", "S16" etc. – nur wenn `labels=None`
+    * Fallback: "0", "1", ... wenn beides `None`
+  * `stream_labels`-Parameter entfernt – Klarnamen werden als `labels`-Liste direkt übergeben
+  * **Neue Parameter**: `xlabel`, `hline` (Referenzlinie im Boxplot, abschaltbar)
+  * `ylabel_left` Default von `"Massenstrom [kg/h]"` → `"Wert"` (domänenneutral)
+  * `normalize=False` als neuer Default (vorher `True`) – sicherer für generische Nutzung
+  * Neue Hilfsfunktion `_safe_normalize()`: Schutz vor Division durch Null bei Mittelwerten nahe 0
+  * Darstellung gefilterter Punkte im Zeitverlauf korrigiert: Dummy-Scatter für Legendeneintrag
+  * `plot_corrections`: Parameter `stream_labels` → `labels`/`ids` analog angepasst
+  * Docstrings und Kommentare vollständig überarbeitet
+
 
 ## [2026-03-10] – Massenbilanz-Diagnose
 

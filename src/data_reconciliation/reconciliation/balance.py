@@ -34,7 +34,6 @@ import numpy as np
 def compute_mass_balance(
     X: np.ndarray,
     A: np.ndarray,
-    balance_ids: list | None = None,
 ) -> dict:
     """
     Berechnet den Massenbilanz-Fehler (Residual) aus Stromdaten und Matrix A.
@@ -45,14 +44,11 @@ def compute_mass_balance(
 
     Die Funktion ist generalisierbar: Sie kann für beliebige Inputs aufgerufen
     werden, z.B. einmal für Rohdaten X und einmal für gefilterte Daten X_stat.
+    Labels (balance_ids) liegen beim Aufrufer und werden nicht durchgereicht.
 
     Args:
-        X:           (k, N) Messdaten in kg/h – kann Rohdaten oder gefilterte
-                     Daten sein
-        A:           (M, N) Bilanzmatrix mit Einträgen {-1, 0, +1}
-        balance_ids: list[str] | None – Bezeichnungen der Bilanzräume,
-                     durchgereicht aus reader.read_excel() für Auswertung
-                     und Visualisierung (optional, kein Einfluss auf Rechnung)
+        X: (k, N) Messdaten in kg/h – kann Rohdaten oder gefilterte Daten sein
+        A: (M, N) Bilanzmatrix mit Einträgen {-1, 0, +1}
 
     Returns:
         {
@@ -61,19 +57,16 @@ def compute_mass_balance(
           'residuals_mean': np.ndarray  – (M,) Mittlerer Bilanzfehler je
                                          Bilanzraum über alle k Zeitschritte
                                          [kg/h]
-          'balance_ids':    list | None – Bezeichnungen der Bilanzräume,
-                                         unverändert weitergegeben
         }
 
     Beispiel:
-        >>> balance_raw  = compute_mass_balance(X,      A, balance_ids)
-        >>> balance_stat = compute_mass_balance(X_stat, A, balance_ids)
+        >>> balance_raw  = compute_mass_balance(X,      A)
+        >>> balance_stat = compute_mass_balance(X_stat, A)
     """
-    residuals      = X @ A.T               # (k, M)
+    residuals      = X @ A.T                # (k, M)
     residuals_mean = residuals.mean(axis=0) # (M,)
 
     return {
         "residuals":      residuals,
         "residuals_mean": residuals_mean,
-        "balance_ids":    balance_ids,
     }

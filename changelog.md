@@ -1,7 +1,20 @@
 Changelog
 
 
-Alle relevanten Änderungen am Projekt werden hier dokumentiert. Format angelehnt an Keep a Changelog.
+[2026-03-11] – Bereinigung: balance_ids aus compute_mass_balance entfernt
+Geändert
+
+reconciliation/balance.py: Parameter balance_ids aus Signatur und Return-Dict entfernt
+
+Begründung: Labels haben keinen Einfluss auf die Berechnung und liegen
+beim Aufrufer bereits aus read_excel() vor – kein Durchreichen nötig
+Signatur vereinfacht zu compute_mass_balance(X, A)
+
+
+tests/test_balance.py: Tests test_balance_ids_none_by_default und
+test_balance_ids_passthrough entfernt; test_output_keys prüft nun
+{"residuals", "residuals_mean"}
+main.py: Beide compute_mass_balance()-Calls ohne balance_ids-Argument
 
 
 ## [2026-03-10] – Benennung: read_excel-Dict und main.py-Bugfix

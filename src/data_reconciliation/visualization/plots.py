@@ -155,7 +155,7 @@ def plot_timeseries(X: np.ndarray,
     if mask is not None:
         removed = ~mask
         # Dummy-Scatter nur für Legendeneintrag
-        ax1.scatter([], [], color="red", s=10, label="entfernt (Filter)")
+        ax1.scatter([], [], color="red", s=10, label="Entfernt (Filter)")
         for i in range(n):
             ax1.scatter(t[removed], X[removed, i],
                         color="red", s=3, alpha=0.4, zorder=5)
@@ -176,7 +176,8 @@ def plot_timeseries(X: np.ndarray,
     # --- Rechts: Boxplot ---
     # normalize=True:  hline bei 1.0, kein rotes Kreuz (Mittelwert = 1 per Definition)
     # normalize=False: rotes Kreuz für Mittelwert, keine automatische hline
-    X_box         = _safe_normalize(X) if normalize else X
+    X_plot = X[mask] if mask is not None else X
+    X_box  = _safe_normalize(X_plot) if normalize else X_plot
     _ylabel_right = ylabel_right or ("Normierter Wert (x / x̄)" if normalize else "Wert")
 
     # hline: explizit übergeben > automatisch aus normalize > None

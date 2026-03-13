@@ -1,9 +1,19 @@
 Changelog
 
 
+## [2026-03-13] – Visualisierung: Boxplot zeigt gefilterte Daten bei mask-Übergabe
+### Geändert
+* `visualization/plots.py`: Boxplot-Verhalten bei `mask`-Übergabe angepasst
+  * `mask=None` → Boxplot zeigt Rohdaten (unverändert)
+  * `mask=mask` → Boxplot zeigt gefilterte Daten (X[mask])
+  * Damit sind in einem Plot gleichzeitig sichtbar:
+    links: Zeitverlauf mit markierten gefilterten Punkten,
+    rechts: Boxplot der verbleibenden stationären Daten
+  * Zwei separate Figures (Rohdaten + gefilterte Daten) sind damit
+    für die Standarddarstellung nicht mehr nötig
+
 
 ## [2026-03-13] – Visualisierung: Boxplot Mittelwertdarstellung
-
 ### Geändert
 * `visualization/plots.py`: Mittelwertdarstellung im Boxplot überarbeitet
   * `normalize=True`  → hline bei 1.0, kein rotes Kreuz (wäre redundant)

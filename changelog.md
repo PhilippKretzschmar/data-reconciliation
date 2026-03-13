@@ -1,5 +1,33 @@
 Changelog
 
+## [2026-03-13] – BalanceReport: Tabellarische Bilanzauswertung
+
+### Hinzugefügt
+## [2026-03-13] – BalanceReport: Tabellarische Bilanzauswertung
+
+* `reconciliation/balance.py`: Neue Klasse `BalanceReport`
+  * Verwaltet mehrere X-Datensätze (Rohdaten, gefiltert, rekonziliert, …)
+    über eine Session in einem geordneten Dict
+  * `__init__(A, balance_names=None, eng_unit=None)`:
+    Validiert `balance_names` gegen Zeilenanzahl von A;
+    `None` → automatische Nummerierung `Bilanz_0, Bilanz_1, …`;
+    `eng_unit=None` → Platzhalter `[eng_unit]` in Spaltenheadern
+  * `add(label, X, overwrite=False)`:
+    Prüft Spaltendimension von X gegen A;
+    bei doppeltem Label: Fehlermeldung mit Hinweis auf `overwrite=True`
+  * `reset()`: Löscht alle Datensätze; A und `balance_names` bleiben erhalten
+  * `table()`: Gibt Bilanzmetriken als `pd.DataFrame` zurück:
+    Zeilen = Metriken (M=1) bzw. MultiIndex Bilanzraum×Metrik (M>1),
+    Spalten = Datensatz-Labels in Reihenfolge der `add()`-Calls
+  * Metriken je Bilanzraum und Datensatz:
+    N, Input, Output, Residual abs. (Output − Input), Residual rel. (% von Input)
+  * Adaptive Rundung via `_fmt()`: |val| ≥ 100 → 0 Dezimalstellen, sonst 2;
+    Residual rel. [%] immer 2 Dezimalstellen
+  * Nutzt `compute_mass_balance()` intern – kein externes Vorausrechnen nötig
+* `tests/test_balance.py`: Tests für `BalanceReport` ergänzt (Konstruktor,
+  `add()`, `reset()`, `table()` inkl. Shapes, Metrikwerte, Spaltenreihenfolge,
+  Label-Kollision, Zeilenfilter)
+
 
 ## [2026-03-13] – Visualisierung: Boxplot zeigt gefilterte Daten bei mask-Übergabe
 ### Geändert

@@ -7,6 +7,7 @@ Einsetzbar für beliebige Zeitreihendaten, z.B. Massenströme, Residuale, etc.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from matplotlib.ticker import ScalarFormatter
 
 # Schriftgrößen – zentral anpassbar
@@ -71,6 +72,7 @@ def plot_timeseries(X: np.ndarray,
                     ylabel_right: str | None = None,
                     normalize: bool = False,
                     hline: float | None = None,
+                    hline_label: str | None = None,
                     sci_left: bool = False,
                     sci_right: bool = False) -> plt.Figure:
     """
@@ -79,6 +81,15 @@ def plot_timeseries(X: np.ndarray,
     Generisch einsetzbar für beliebige Zeitreihen (Massenströme, Residuale,
     etc.). Labels für Legende und Boxplot-Kategorien werden einheitlich aus
     `labels` oder `ids` abgeleitet.
+
+    Mittelwertdarstellung im Boxplot:
+        normalize=True  → horizontale Referenzlinie bei 1.0 (x / x̄ = 1),
+                          kein rotes Kreuz (redundant bei Normierung)
+        normalize=False → rotes Kreuz zeigt arithmetischen Mittelwert je Kategorie,
+                          keine automatische hline (Mittelwert liegt kategorieabhängig)
+
+    In beiden Fällen wird der Mittelwert in einer Boxplot-Legende beschriftet.
+    Die hline kann in beiden Modi explizit gesetzt oder unterdrückt werden.
 
     Args:
         X:            (k, N) Zeitreihendaten
@@ -97,32 +108,39 @@ def plot_timeseries(X: np.ndarray,
                       Default: "Normierter Wert (x / x̄)" wenn normalize=True,
                                "Wert" wenn normalize=False.
         normalize:    True  → Boxplot normiert auf Spaltenmittelwert (x / x̄),
-                               Referenzlinie bei 1.0. Nicht sinnvoll für
-                               vorzeichenbehaftete Daten (z.B. Residuale).
-                      False → Boxplot mit Rohdaten. Default.
+                               hline bei 1.0, kein rotes Kreuz.
+                      False → Boxplot mit Rohdaten, rotes Kreuz für Mittelwert,
+                               keine automatische hline. Default.
         hline:        Horizontale Referenzlinie im Boxplot. (optional)
-                      Default: 1.0 wenn normalize=True, 0.0 wenn normalize=False.
-                      Auf None setzen um Linie zu unterdrücken.
+                      Default: 1.0 wenn normalize=True, None wenn normalize=False.
+                      Explizit auf None setzen um Linie zu unterdrücken,
+                      z.B. für Residuale auf 0.0 setzen.
+        hline_label:  Beschriftung der Referenzlinie in der Boxplot-Legende.
+                      Default: "Mittelwert" wenn normalize=True,
+                               "Referenz"   wenn normalize=False.
+                      Explizit setzen um den Default zu überschreiben,
+                      z.B. hline_label="Nullreferenz" für Residuale.
         sci_left:     True → wissenschaftliche Notation (z.B. 1×10⁶) auf der
-                      y-Achse des Zeitverlaufs. Sinnvoll bei sehr großen oder
-                      sehr kleinen Werten. Default: False.
+                      y-Achse des Zeitverlaufs. Erzwungen unabhängig von der
+                      Größenordnung. Default: False.
         sci_right:    True → wissenschaftliche Notation auf der y-Achse des
-                      Boxplots. Default: False.
+                      Boxplots. Erzwungen unabhängig von der Größenordnung.
+                      Default: False.
 
     Returns:
         matplotlib Figure
 
     Beispiele:
-        # Massenströme mit Klarnamen
+        # Massenströme mit Klarnamen, normiert
         stream_names = [stream_meta[sid]["klarname"] for sid in stream_ids]
         fig = plot_timeseries(X, labels=stream_names, normalize=True,
                               ylabel_left=r"Massenstrom / kg$\\cdot$h$^{-1}$")
 
-        # Bilanzresiduale
+        # Bilanzresiduale, unnormiert, Nullreferenz explizit gesetzt
         fig = plot_timeseries(residuals, labels=balance_labels,
                               title_left="Bilanzresiduale – Zeitverlauf",
                               ylabel_left=r"Residual / kg$\\cdot$h$^{-1}$",
-                              sci_left=True)
+                              hline=0.0, sci_left=True)
     """
     n       = X.shape[1]
     _labels = _make_labels(n, labels, ids)
@@ -150,39 +168,57 @@ def plot_timeseries(X: np.ndarray,
     ax1.grid(True, alpha=0.3)
 
     if sci_left:
-	    fmt = ScalarFormatter(useMathText=True)
-	    fmt.set_scientific(True)
-	    fmt.set_powerlimits((0, 0))
-	    ax1.yaxis.set_major_formatter(fmt)
+        fmt = ScalarFormatter(useMathText=True)
+        fmt.set_scientific(True)
+        fmt.set_powerlimits((0, 0))
+        ax1.yaxis.set_major_formatter(fmt)
 
     # --- Rechts: Boxplot ---
+    # normalize=True:  hline bei 1.0, kein rotes Kreuz (Mittelwert = 1 per Definition)
+    # normalize=False: rotes Kreuz für Mittelwert, keine automatische hline
     X_box         = _safe_normalize(X) if normalize else X
     _ylabel_right = ylabel_right or ("Normierter Wert (x / x̄)" if normalize else "Wert")
 
-    # Referenzlinie: explizit übergeben > automatisch aus normalize
-    if hline is None:
-        _hline = 1.0 if normalize else 0.0
-    else:
+    # hline: explizit übergeben > automatisch aus normalize > None
+    if hline is not None:
         _hline = hline
+    else:
+        _hline = 1.0 if normalize else None
 
     ax2.boxplot(X_box, labels=_labels, showfliers=True,
-                showmeans=True,
+                showmeans=not normalize,          # Kreuz nur im nicht-normierten Fall
                 meanprops=dict(marker="x", markeredgecolor="red",
                                markerfacecolor="red", markersize=8,
                                markeredgewidth=1.5),
                 flierprops=dict(marker=".", markersize=2, alpha=0.3))
+
     ax2.set_xticklabels(_labels, rotation=30, ha="right", fontsize=_FS)
-    ax2.axhline(_hline, color="red", linestyle="--", alpha=0.5, linewidth=1)
     ax2.set_ylabel(_ylabel_right, fontsize=_FS)
     ax2.set_title(title_right, fontsize=_FS_TITLE)
     ax2.tick_params(axis="y", labelsize=_FS)
     ax2.grid(True, alpha=0.3)
 
+    # Referenzlinie und Legende
+    legend_handles = []
+    if _hline is not None:
+        _hline_label = hline_label or ("Mittelwert" if normalize else "Referenz")
+        ax2.axhline(_hline, color="red", linestyle="--", alpha=0.7, linewidth=1)
+        legend_handles.append(
+            Line2D([0], [0], color="red", linestyle="--",
+                   linewidth=1, label=_hline_label)
+        )
+    else:
+        legend_handles.append(
+            Line2D([0], [0], color="red", marker="x", linestyle="None",
+                   markersize=8, markeredgewidth=1.5, label="Mittelwert")
+        )
+    ax2.legend(handles=legend_handles, fontsize=_FS_LEG)
+
     if sci_right:
-	    fmt = ScalarFormatter(useMathText=True)
-	    fmt.set_scientific(True)
-	    fmt.set_powerlimits((0, 0))
-	    ax2.yaxis.set_major_formatter(fmt)
+        fmt = ScalarFormatter(useMathText=True)
+        fmt.set_scientific(True)
+        fmt.set_powerlimits((0, 0))
+        ax2.yaxis.set_major_formatter(fmt)
 
     plt.tight_layout()
     return fig

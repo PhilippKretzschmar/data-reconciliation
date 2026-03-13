@@ -229,3 +229,6 @@ setup_project.py
 start_workspace.ps1
 start_jupyter.ps1
 stop_jupyter.ps1
+
+# Andere Dateien
+docs/*.docx

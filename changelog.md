@@ -1,6 +1,27 @@
 Changelog
 
 
+
+## [2026-03-13] – Visualisierung: Boxplot Mittelwertdarstellung
+
+### Geändert
+* `visualization/plots.py`: Mittelwertdarstellung im Boxplot überarbeitet
+  * `normalize=True`  → hline bei 1.0, kein rotes Kreuz (wäre redundant)
+  * `normalize=False` → rotes Kreuz für kategorischen Mittelwert, keine
+                        automatische hline (Mittelwert liegt kategorieabhängig)
+  * `hline` Default: `1.0` wenn normalize=True, `None` wenn normalize=False –
+    weiterhin explizit override-fähig (z.B. `hline=0.0` für Residuale)
+  * Boxplot-Legende ergänzt: Proxy Artist zeigt in beiden Modi an, dass
+    hline bzw. Kreuz den Mittelwert repräsentieren
+  * `from matplotlib.lines import Line2D` ergänzt
+
+Anschließend ergänzt
+* `hline_label` Parameter ergänzt: Beschriftung der Referenzlinie konfigurierbar –
+    Default "Mittelwert" (normalize=True) bzw. "Referenz" (normalize=False),
+    override z.B. mit "Nullreferenz" für Residuale
+
+
+
 [2026-03-11] – Bereinigung: balance_ids aus compute_mass_balance entfernt
 Geändert
 
@@ -9,7 +30,6 @@ reconciliation/balance.py: Parameter balance_ids aus Signatur und Return-Dict en
 Begründung: Labels haben keinen Einfluss auf die Berechnung und liegen
 beim Aufrufer bereits aus read_excel() vor – kein Durchreichen nötig
 Signatur vereinfacht zu compute_mass_balance(X, A)
-
 
 tests/test_balance.py: Tests test_balance_ids_none_by_default und
 test_balance_ids_passthrough entfernt; test_output_keys prüft nun
